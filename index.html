@@ -74,6 +74,22 @@
     border:none; color:#fff; width:36px; height:36px; border-radius:50%;
     font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer;
   }
+  .worktype-tabs{display:flex; gap:8px; margin-top:14px;}
+  .wt-tab{
+    flex:1; background:rgba(255,255,255,0.14); border:1.5px solid rgba(255,255,255,0.3);
+    color:#fff; padding:9px 8px; border-radius:20px; font-size:12.5px; font-weight:700; cursor:pointer;
+    opacity:0.75;
+  }
+  .wt-tab.active{background:#fff; color:var(--teal-dark); opacity:1; border-color:#fff;}
+  .worktype-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .worktype-choice{
+    border:1.5px solid #DCCFB8; border-radius:var(--radius-sm); padding:14px 8px;
+    text-align:center; font-size:13px; background:#fff; cursor:pointer; color:var(--ink-soft); font-weight:600;
+  }
+  .worktype-choice .emoji{font-size:24px; display:block; margin-bottom:4px;}
+  .worktype-choice.selected{border-color:var(--teal); background:var(--teal-tint); color:var(--teal-dark);}
+  .price-badge{color:var(--brick); font-weight:700;}
+  .savob-badge{color:var(--gold); font-weight:700;}
 
   .content{padding:16px;}
 
@@ -197,6 +213,32 @@
   }
   .toast.show{opacity:0.95;}
 
+  .offline-banner{
+    position:fixed; top:0; left:0; right:0; max-width:520px; margin:0 auto;
+    background:var(--danger); color:#fff; text-align:center; padding:10px 14px;
+    font-size:13px; font-weight:700; z-index:500; display:none;
+  }
+  .offline-banner.show{display:block;}
+
+  .admin-badge{
+    display:inline-block; background:var(--danger); color:#fff; font-size:11px; font-weight:700;
+    padding:3px 9px; border-radius:20px; margin-left:6px;
+  }
+  .admin-post-row{background:#fff; border-radius:var(--radius-sm); padding:12px; margin-bottom:10px; border:1px solid #EEE3CF;}
+  .admin-post-row .apr-title{font-weight:700; font-size:14px; margin-bottom:2px;}
+  .admin-post-row .apr-meta{font-size:12px; color:var(--ink-soft); margin-bottom:8px;}
+  .admin-actions{display:flex; gap:8px;}
+  .admin-btn{flex:1; border:none; border-radius:var(--radius-sm); padding:8px; font-size:12px; font-weight:700; cursor:pointer; color:#fff;}
+  .admin-btn.del{background:var(--danger);}
+  .admin-btn.ban{background:#5A4636;}
+  .admin-btn.unban{background:var(--sage);}
+  .reported-flag{background:#FDECEA; color:var(--danger); font-size:11px; font-weight:700; padding:3px 8px; border-radius:20px; display:inline-block; margin-bottom:6px;}
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;}
+  .stat-box{background:var(--bg-elevated); border-radius:var(--radius-sm); padding:12px 6px; text-align:center; border:1px solid #EEE3CF;}
+  .stat-box .num{font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--teal-dark); display:block;}
+  .stat-box .lbl{font-size:10.5px; color:var(--ink-soft);}
+  .report-btn{background:none; border:1.5px solid var(--danger); color:var(--danger); border-radius:20px; padding:8px 14px; font-size:12.5px; font-weight:700; cursor:pointer; margin-top:10px;}
+
   .rating-summary{display:flex; align-items:center; gap:8px;}
   .rating-num{font-family:var(--font-display); font-size:30px; font-weight:700; color:var(--teal-dark);}
   .rating-stars{color:var(--gold); font-size:15px;}
@@ -211,7 +253,9 @@
 </head>
 <body>
 <div id="app">
+<div class="offline-banner" id="offline-banner">ðŸ”Œ Internet aloqasini tekshiring</div>
 
+  <!-- ============ AUTH ============ -->
   <div class="screen active" id="screen-auth">
     <div class="tile-strip"></div>
     <div class="topbar">
@@ -238,6 +282,7 @@
     </div>
   </div>
 
+  <!-- ============ FEED ============ -->
   <div class="screen" id="screen-feed">
     <div class="tile-strip"></div>
     <div class="topbar">
@@ -246,7 +291,11 @@
           <h1>Mahalla Yordam</h1>
           <p id="feed-location-label">Joylashuv aniqlanmagan</p>
         </div>
-        <button class="icon-btn" onclick="requestGPSForFeed()">📍</button>
+        <button class="icon-btn" onclick="requestGPSForFeed()">ðŸ“</button>
+      </div>
+      <div class="worktype-tabs" id="worktype-tabs">
+        <button class="wt-tab active" id="wt-savob" onclick="setFeedFilter('savob')">ðŸ¤² Savobli ish</button>
+        <button class="wt-tab" id="wt-pullik" onclick="setFeedFilter('pullik')">ðŸ’° Pullik ish</button>
       </div>
     </div>
     <div class="content" id="feed-list">
@@ -254,17 +303,26 @@
     </div>
   </div>
 
+  <!-- ============ CREATE POST ============ -->
   <div class="screen" id="screen-create">
     <div class="tile-strip"></div>
     <div class="topbar">
       <div class="topbar-row">
-        <button class="back-btn" onclick="goTo('feed')">←</button>
+        <button class="back-btn" onclick="goTo('feed')">â†</button>
         <div><h1>Yordam so'rash</h1></div>
         <div style="width:20px;"></div>
       </div>
     </div>
     <div class="content">
       <div class="card">
+        <div class="field">
+          <label>Ish turi</label>
+          <div class="worktype-grid" id="worktype-grid"></div>
+        </div>
+        <div class="field" id="price-field" style="display:none;">
+          <label>Taxminiy narx (ixtiyoriy)</label>
+          <input type="text" id="post-price" placeholder="Masalan: 50 000 so'm">
+        </div>
         <div class="field">
           <label>Nima uchun yordam kerak?</label>
           <div class="cat-grid" id="cat-grid"></div>
@@ -281,7 +339,7 @@
           <label>Joylashuv</label>
           <div class="loc-row">
             <input type="text" id="post-mahalla" placeholder="Mahalla nomi">
-            <button class="loc-btn" onclick="useGPSForPost()">📍 GPS</button>
+            <button class="loc-btn" onclick="useGPSForPost()">ðŸ“ GPS</button>
           </div>
           <div class="gps-status" id="post-gps-status"></div>
         </div>
@@ -290,11 +348,12 @@
     </div>
   </div>
 
+  <!-- ============ POST DETAIL ============ -->
   <div class="screen" id="screen-detail">
     <div class="tile-strip"></div>
     <div class="topbar">
       <div class="topbar-row">
-        <button class="back-btn" onclick="goTo('feed')">←</button>
+        <button class="back-btn" onclick="goTo('feed')">â†</button>
         <div><h1 style="font-size:18px;">So'rov tafsilotlari</h1></div>
         <div style="width:20px;"></div>
       </div>
@@ -302,11 +361,12 @@
     <div class="content" id="detail-content"></div>
   </div>
 
+  <!-- ============ CHAT ============ -->
   <div class="screen" id="screen-chat">
     <div class="tile-strip"></div>
     <div class="topbar">
       <div class="topbar-row">
-        <button class="back-btn" onclick="leaveChat()">←</button>
+        <button class="back-btn" onclick="leaveChat()">â†</button>
         <div>
           <h1 id="chat-title" style="font-size:17px;">Suhbat</h1>
           <p id="chat-subtitle"></p>
@@ -319,11 +379,12 @@
       <div id="chat-close-panel"></div>
       <div class="chat-input-row">
         <input type="text" id="chat-input" placeholder="Xabar yozing...">
-        <button class="send-btn" onclick="sendMessage()">➤</button>
+        <button class="send-btn" onclick="sendMessage()">âž¤</button>
       </div>
     </div>
   </div>
 
+  <!-- ============ PROFILE ============ -->
   <div class="screen" id="screen-profile">
     <div class="tile-strip"></div>
     <div class="topbar">
@@ -332,15 +393,29 @@
     <div class="content" id="profile-content"></div>
   </div>
 
+  <!-- ============ ADMIN PANEL ============ -->
+  <div class="screen" id="screen-admin">
+    <div class="tile-strip"></div>
+    <div class="topbar">
+      <div class="topbar-row">
+        <button class="back-btn" onclick="goTo('profile')">â†</button>
+        <div><h1 style="font-size:18px;">Admin panel</h1></div>
+        <div style="width:20px;"></div>
+      </div>
+    </div>
+    <div class="content" id="admin-content"><div class="spinner"></div></div>
+  </div>
+
+  <!-- ============ BOTTOM NAV ============ -->
   <div class="bottom-nav" id="bottom-nav" style="display:none;">
     <button class="nav-item" id="nav-feed" onclick="goTo('feed')">
-      <span class="emoji">🏘️</span><span>Lenta</span>
+      <span class="emoji">ðŸ˜ï¸</span><span>Ishlar</span>
     </button>
     <button class="nav-item" onclick="goTo('create')" style="flex:0 0 70px; display:flex; align-items:center; justify-content:center;">
       <span class="nav-fab">+</span>
     </button>
     <button class="nav-item" id="nav-profile" onclick="goTo('profile')">
-      <span class="emoji">👤</span><span>Profil</span>
+      <span class="emoji">ðŸ‘¤</span><span>Profil</span>
     </button>
   </div>
 
@@ -349,7 +424,7 @@
 
 <script>
 /* =========================================================================
-   MAHALLA YORDAM — konfiguratsiya
+   MAHALLA YORDAM â€” konfiguratsiya
    ========================================================================= */
 // Bu yerga o'zingizning Firebase Realtime Database URL manzilingizni qo'ying.
 // Firebase Console > Project Settings > Realtime Database > URL
@@ -357,19 +432,14 @@
 var FIREBASE_DB_URL = "https://mahalla-app-1a372-default-rtdb.firebaseio.com";
 
 var CATEGORIES = [
-  {id:"bolalar", emoji:"👶", label:"Bolalarga qarash"},
-  {id:"xarid", emoji:"🛒", label:"Xarid qilish"},
-  {id:"tamir", emoji:"🔧", label:"Ta'mirlash"},
-  {id:"tibbiy", emoji:"🏥", label:"Tibbiy yordam"},
-  {id:"transport", emoji:"🚗", label:"Transport"},
-  {id:"boshqa", emoji:"🤝", label:"Boshqa"}
+  {id:"bolalar", emoji:"ðŸ‘¶", label:"Bolalarga qarash"},
+  {id:"xarid", emoji:"ðŸ›’", label:"Xarid qilish"},
+  {id:"tamir", emoji:"ðŸ”§", label:"Ta'mirlash"},
+  {id:"tibbiy", emoji:"ðŸ¥", label:"Tibbiy yordam"},
+  {id:"transport", emoji:"ðŸš—", label:"Transport"},
+  {id:"boshqa", emoji:"ðŸ¤", label:"Boshqa"}
 ];
-
-var state = {
-  uid: null,
-  user: null,
-  gps: null, // {lat, lng}
-  selectedCategory: null,
+feedFilter: "savob",
   postGPS: null,
   currentPostId: null,
   currentChatId: null,
@@ -377,8 +447,19 @@ var state = {
   feedPollTimer: null
 };
 
+function normalizePhone(p){
+  return (p || "").replace(/[\s\-\(\)]/g, "");
+}
+function isAdminPhone(phone){
+  var norm = normalizePhone(phone);
+  for(var i=0;i<ADMIN_PHONES.length;i++){
+    if(normalizePhone(ADMIN_PHONES[i]) === norm) return true;
+  }
+  return false;
+}
+
 /* =========================================================================
-   Firebase REST yordamchi funksiyalar (SDK YO'Q — faqat fetch)
+   Firebase REST yordamchi funksiyalar (SDK YO'Q â€” faqat fetch)
    ========================================================================= */
 function dbConfigured(){
   return FIREBASE_DB_URL.indexOf("SIZNING-PROJECT") === -1;
@@ -472,6 +553,7 @@ function goTo(name){
   if(name === "feed") loadFeed();
   if(name === "create") renderCategoryPicker();
   if(name === "profile") loadProfile();
+  if(name === "admin") loadAdminPanel();
 }
 
 /* =========================================================================
@@ -480,18 +562,39 @@ function goTo(name){
 function initSession(){
   if(!dbConfigured()){
     document.getElementById("config-warning-slot").innerHTML =
-      '<div class="config-warning">⚠️ Firebase ulanmagan. Yuqoridagi kod ichida <b>FIREBASE_DB_URL</b> qatoriga o\'zingizning Realtime Database manzilingizni yozing. Hozircha ro\'yxatdan o\'tish ishlamaydi.</div>';
+      '<div class="config-warning">âš ï¸ Firebase ulanmagan. Yuqoridagi kod ichida <b>FIREBASE_DB_URL</b> qatoriga o\'zingizning Realtime Database manzilingizni yozing. Hozircha ro\'yxatdan o\'tish ishlamaydi.</div>';
   }
+  setupConnectivityWatcher();
+
   var savedUid = localStorage.getItem("my_uid");
-  if(savedUid){
-    state.uid = savedUid;
-    dbGet("users/" + savedUid).then(function(user){
-      if(user){
-        state.user = user;
-        onLoggedIn();
-      }
-    }).catch(function(){});
+  if(!savedUid) return;
+
+  state.uid = savedUid;
+
+  // Avval qurilmada saqlangan (kesh) ma'lumot bilan darhol kirib olamiz â€”
+  // shunda internet vaqtincha yo'q bo'lsa ham, foydalanuvchi qayta ro'yxatdan
+  // o'tishga majbur bo'lmaydi va sessiyasi yo'qolmaydi.
+  var cached = localStorage.getItem("cached_user_" + savedUid);
+  if(cached){
+    try{
+      state.user = JSON.parse(cached);
+      state.isAdmin = isAdminPhone(state.user.phone);
+      onLoggedIn();
+    }catch(e){}
   }
+
+  // Fon rejimida serverdan yangilanÐ³Ð°Ð½ ma'lumotni olamiz (masalan boshqa
+  // qurilmadan reyting o'zgargan bo'lsa, shu bilan yangilanadi).
+  dbGet("users/" + savedUid).then(function(user){
+    if(user){
+      state.user = user;
+      state.isAdmin = isAdminPhone(user.phone);
+      localStorage.setItem("cached_user_" + savedUid, JSON.stringify(user));
+      if(!cached){ onLoggedIn(); }
+    }
+  }).catch(function(){
+    // Tarmoq yo'q â€” keshdagi ma'lumot bilan davom etaveramiz.
+  });
 }
 
 function registerUser(){
@@ -506,6 +609,10 @@ function registerUser(){
     showToast("Avval Firebase ulanishi kerak");
     return;
   }
+  if(!navigator.onLine){
+    showToast("Internet aloqasini tekshiring");
+    return;
+  }
   var newUid = uid4();
   var userData = {
     name: name,
@@ -517,8 +624,10 @@ function registerUser(){
   };
   dbSet("users/" + newUid, userData).then(function(){
     localStorage.setItem("my_uid", newUid);
+    localStorage.setItem("cached_user_" + newUid, JSON.stringify(userData));
     state.uid = newUid;
     state.user = userData;
+    state.isAdmin = isAdminPhone(phone);
     onLoggedIn();
     showToast("Xush kelibsiz, " + name + "!");
   }).catch(function(err){
@@ -536,6 +645,23 @@ function onLoggedIn(){
   }, function(){
     document.getElementById("feed-location-label").textContent = state.user.mahalla + " mahallasi";
   });
+}
+
+/* =========================================================================
+   Internet aloqasini kuzatish
+   ========================================================================= */
+function setupConnectivityWatcher(){
+  function update(){
+    var banner = document.getElementById("offline-banner");
+    if(navigator.onLine){
+      banner.className = "offline-banner";
+    } else {
+      banner.className = "offline-banner show";
+    }
+  }
+  window.addEventListener("online", update);
+  window.addEventListener("offline", update);
+  update();
 }
 
 function tryGetGPS(onOk, onFail){
@@ -560,21 +686,34 @@ function requestGPSForFeed(){
 /* =========================================================================
    Lenta (Feed)
    ========================================================================= */
+function setFeedFilter(type){
+  state.feedFilter = type;
+  document.getElementById("wt-savob").className = "wt-tab" + (type==="savob" ? " active" : "");
+  document.getElementById("wt-pullik").className = "wt-tab" + (type==="pullik" ? " active" : "");
+  loadFeed();
+}
+
 function loadFeed(){
   var listEl = document.getElementById("feed-list");
   if(!dbConfigured()){
     listEl.innerHTML = '<div class="config-warning">Firebase ulanmagan. Kodda FIREBASE_DB_URL manzilini kiriting.</div>';
     return;
   }
+  if(!navigator.onLine){
+    listEl.innerHTML = '<div class="config-warning">ðŸ”Œ Internet aloqasini tekshiring va qayta urining.</div>';
+    return;
+  }
   listEl.innerHTML = '<div class="spinner"></div>';
-  dbGet("posts").then(function(posts){
+  Promise.all([dbGet("posts"), dbGet("bannedUsers")]).then(function(results){
+    var posts = results[0];
+    var banned = results[1] || {};
     if(!posts){
-      listEl.innerHTML = emptyStateHTML("🏘️", "Hali so'rovlar yo'q", "Birinchi bo'lib yordam so'rang yoki keyinroq qayting.");
+      listEl.innerHTML = emptyStateHTML("ðŸ˜ï¸", "Hali so'rovlar yo'q", "Birinchi bo'lib yordam so'rang yoki keyinroq qayting.");
       return;
     }
     var arr = [];
     for(var key in posts){
-      if(posts.hasOwnProperty(key)){
+      if(posts.hasOwnProperty(key) && (posts[key].workType || "savob") === state.feedFilter && !banned[posts[key].uid]){
         var p = posts[key];
         p.id = key;
         arr.push(p);
@@ -597,7 +736,7 @@ function loadFeed(){
     });
 
     if(arr.length === 0){
-      listEl.innerHTML = emptyStateHTML("🏘️", "Hali so'rovlar yo'q", "Birinchi bo'lib yordam so'rang.");
+      listEl.innerHTML = emptyStateHTML("ðŸ˜ï¸", "Hali so'rovlar yo'q", "Birinchi bo'lib yordam so'rang.");
       return;
     }
 
@@ -609,6 +748,13 @@ function loadFeed(){
   }).catch(function(){
     listEl.innerHTML = '<div class="config-warning">Ulanishda xatolik. Internetni va Firebase manzilini tekshiring.</div>';
   });
+}
+
+function workTypeBadgeHTML(p){
+  if(p.workType === "pullik"){
+    return '<span class="price-badge">ðŸ’° ' + (p.price ? escapeHTML(p.price) : "Pullik") + '</span>';
+  }
+  return '<span class="savob-badge">ðŸ¤² Savob uchun</span>';
 }
 
 function postCardHTML(p){
@@ -629,8 +775,9 @@ function postCardHTML(p){
       '</div>' +
       '<div class="post-title">' + escapeHTML(p.title) + '</div>' +
       '<div class="post-desc">' + escapeHTML(p.desc || "") + '</div>' +
+      '<div class="post-meta" style="margin-bottom:4px;">' + workTypeBadgeHTML(p) + '</div>' +
       '<div class="post-meta">' +
-        '<span>' + escapeHTML(p.name) + ' · ' + timeAgo(p.createdAt) + '</span>' +
+        '<span>' + escapeHTML(p.name) + ' Â· ' + timeAgo(p.createdAt) + '</span>' +
         distHTML +
       '</div>' +
     '</div>'
@@ -661,6 +808,23 @@ function renderCategoryPicker(){
   document.getElementById("post-mahalla").value = state.user ? state.user.mahalla : "";
   document.getElementById("post-gps-status").textContent = "";
   state.postGPS = null;
+  renderWorkTypePicker();
+}
+
+function renderWorkTypePicker(){
+  var grid = document.getElementById("worktype-grid");
+  var savobSel = state.selectedWorkType === "savob" ? " selected" : "";
+  var pullikSel = state.selectedWorkType === "pullik" ? " selected" : "";
+  grid.innerHTML =
+    '<div class="worktype-choice' + savobSel + '" onclick="selectWorkType(\'savob\')"><span class="emoji">ðŸ¤²</span>Savobli ish</div>' +
+    '<div class="worktype-choice' + pullikSel + '" onclick="selectWorkType(\'pullik\')"><span class="emoji">ðŸ’°</span>Pullik ish</div>';
+  document.getElementById("price-field").style.display = state.selectedWorkType === "pullik" ? "block" : "none";
+}
+
+function selectWorkType(type){
+  state.selectedWorkType = type;
+  if(type === "savob"){ document.getElementById("post-price").value = ""; }
+  renderWorkTypePicker();
 }
 
 function selectCategory(id){
@@ -674,7 +838,7 @@ function useGPSForPost(){
   statusEl.textContent = "Aniqlanmoqda...";
   tryGetGPS(function(coords){
     state.postGPS = coords;
-    statusEl.textContent = "✓ Joylashuv aniqlandi (GPS)";
+    statusEl.textContent = "âœ“ Joylashuv aniqlandi (GPS)";
   }, function(){
     statusEl.className = "gps-status err";
     statusEl.textContent = "GPS mavjud emas. Mahalla nomini qo'lda kiriting.";
@@ -686,14 +850,35 @@ function submitPost(){
   var desc = document.getElementById("post-desc").value.trim();
   var mahalla = document.getElementById("post-mahalla").value.trim();
 
+  if(!state.selectedWorkType){ showToast("Ish turini tanlang (Savobli / Pullik)"); return; }
   if(!state.selectedCategory){ showToast("Toifani tanlang"); return; }
   if(!title){ showToast("Sarlavha kiriting"); return; }
   if(!mahalla && !state.postGPS){ showToast("Joylashuvni kiriting yoki GPS ishlatimg"); return; }
+  if(!navigator.onLine){ showToast("Internet aloqasini tekshiring"); return; }
+
+  dbGet("bannedUsers/" + state.uid).then(function(isBanned){
+    if(isBanned){
+      showToast("Sizga e'lon joylash cheklangan (admin tomonidan bloklangan)");
+      return;
+    }
+    proceedSubmitPost();
+  }).catch(function(){
+    showToast("Internet aloqasini tekshiring");
+  });
+}
+
+function proceedSubmitPost(){
+  var title = document.getElementById("post-title").value.trim();
+  var desc = document.getElementById("post-desc").value.trim();
+  var mahalla = document.getElementById("post-mahalla").value.trim();
+  var priceVal = document.getElementById("post-price").value.trim();
 
   var postData = {
     uid: state.uid,
     name: state.user.name,
     category: state.selectedCategory,
+    workType: state.selectedWorkType,
+    price: state.selectedWorkType === "pullik" ? priceVal : null,
     title: title,
     desc: desc,
     mahalla: mahalla || state.user.mahalla,
@@ -707,7 +892,9 @@ function submitPost(){
     showToast("So'rov joylandi!");
     document.getElementById("post-title").value = "";
     document.getElementById("post-desc").value = "";
+    document.getElementById("post-price").value = "";
     state.selectedCategory = null;
+    state.selectedWorkType = null;
     goTo("feed");
   }).catch(function(){
     showToast("Xatolik yuz berdi");
@@ -728,7 +915,7 @@ function openPost(postId){
   document.getElementById("screen-detail").className = "screen active";
 
   dbGet("posts/" + postId).then(function(p){
-    if(!p){ content.innerHTML = emptyStateHTML("😕","So'rov topilmadi",""); return; }
+    if(!p){ content.innerHTML = emptyStateHTML("ðŸ˜•","So'rov topilmadi",""); return; }
     p.id = postId;
     renderPostDetail(p);
   });
@@ -740,15 +927,18 @@ function renderPostDetail(p){
   var content = document.getElementById("detail-content");
 
   var html = '<div class="card">';
-  html += '<span class="post-cat">' + cat.emoji + ' ' + cat.label + '</span>';
+  html += '<span class="post-cat">' + cat.emoji + ' ' + cat.label + '</span> ' + workTypeBadgeHTML(p);
   html += '<div class="post-title" style="font-size:20px; margin-top:10px;">' + escapeHTML(p.title) + '</div>';
   html += '<p style="font-size:14.5px; line-height:1.55; color:var(--ink-soft);">' + escapeHTML(p.desc || "") + '</p>';
-  html += '<div class="post-meta" style="margin-top:10px;"><span>👤 ' + escapeHTML(p.name) + '</span><span>' + escapeHTML(p.mahalla || "") + '</span></div>';
-  html += '<div class="post-meta" style="margin-top:4px;"><span>🕒 ' + timeAgo(p.createdAt) + '</span><span class="status-pill ' + (p.status==="open"?"status-open":"status-closed") + '">' + (p.status==="open"?"Ochiq":"Yopilgan") + '</span></div>';
+  html += '<div class="post-meta" style="margin-top:10px;"><span>ðŸ‘¤ ' + escapeHTML(p.name) + '</span><span>' + escapeHTML(p.mahalla || "") + '</span></div>';
+  html += '<div class="post-meta" style="margin-top:4px;"><span>ðŸ•’ ' + timeAgo(p.createdAt) + '</span><span class="status-pill ' + (p.status==="open"?"status-open":"status-closed") + '">' + (p.status==="open"?"Ochiq":"Yopilgan") + '</span></div>';
   html += '</div>';
 
   if(!isOwner && p.status === "open"){
-    html += '<button class="btn-primary" onclick="offerHelp(\'' + p.id + '\')">🤝 Yordam berishga tayyorman</button>';
+    html += '<button class="btn-primary" onclick="offerHelp(\'' + p.id + '\')">ðŸ¤ Yordam berishga tayyorman</button>';
+  }
+  if(!isOwner){
+    html += '<div style="text-align:center;"><button class="report-btn" onclick="reportPost(\'' + p.id + '\')">ðŸš© Shikoyat qilish</button></div>';
   }
 
   if(isOwner){
@@ -777,9 +967,9 @@ function loadHelpersList(postId){
     for(var hUid in helpers){
       if(helpers.hasOwnProperty(hUid)){
         var h = helpers[hUid];
-        var stars = h.ratingCount > 0 ? (h.ratingSum/h.ratingCount).toFixed(1) : "—";
+        var stars = h.ratingCount > 0 ? (h.ratingSum/h.ratingCount).toFixed(1) : "â€”";
         html += '<div class="helper-item">' +
-          '<div><div class="hname">' + escapeHTML(h.name) + '</div><div class="hstars">⭐ ' + stars + '</div></div>' +
+          '<div><div class="hname">' + escapeHTML(h.name) + '</div><div class="hstars">â­ ' + stars + '</div></div>' +
           '<button class="accept-btn" onclick="openChatWith(\'' + postId + '\',\'' + hUid + '\',\'' + escapeHTML(h.name).replace(/'/g,"") + '\')">Suhbat</button>' +
         '</div>';
       }
@@ -789,17 +979,23 @@ function loadHelpersList(postId){
 }
 
 function offerHelp(postId){
-  dbGet("posts/" + postId).then(function(p){
-    p.id = postId;
-    var helperSnapshot = {
-      name: state.user.name,
-      ratingSum: state.user.ratingSum || 0,
-      ratingCount: state.user.ratingCount || 0,
-      ts: Date.now()
-    };
-    dbSet("postHelpers/" + postId + "/" + state.uid, helperSnapshot).then(function(){
-      showToast("Taklifingiz yuborildi!");
-      openChatWith(postId, state.uid, state.user.name, p);
+  dbGet("bannedUsers/" + state.uid).then(function(isBanned){
+    if(isBanned){
+      showToast("Sizga bu amal cheklangan (admin tomonidan bloklangan)");
+      return;
+    }
+    dbGet("posts/" + postId).then(function(p){
+      p.id = postId;
+      var helperSnapshot = {
+        name: state.user.name,
+        ratingSum: state.user.ratingSum || 0,
+        ratingCount: state.user.ratingCount || 0,
+        ts: Date.now()
+      };
+      dbSet("postHelpers/" + postId + "/" + state.uid, helperSnapshot).then(function(){
+        showToast("Taklifingiz yuborildi!");
+        openChatWith(postId, state.uid, state.user.name, p);
+      });
     });
   });
 }
@@ -808,6 +1004,15 @@ function closePost(postId){
   dbUpdate("posts/" + postId, {status:"closed"}).then(function(){
     showToast("So'rov yopildi");
     openPost(postId);
+  });
+}
+
+function reportPost(postId){
+  dbGet("posts/" + postId).then(function(p){
+    var newCount = (p.reportCount || 0) + 1;
+    dbUpdate("posts/" + postId, {reported:true, reportCount:newCount}).then(function(){
+      showToast("Shikoyatingiz yuborildi. Rahmat!");
+    });
   });
 }
 
@@ -853,7 +1058,7 @@ function openChatWith(postId, helperUid, helperName, postObj){
 function renderClosePanel(post, isRequester, helperUid, helperName){
   var panel = document.getElementById("chat-close-panel");
   if(isRequester && post.status === "open"){
-    panel.innerHTML = '<div style="padding:10px 14px 0;"><button class="btn-secondary" style="margin-top:0;" onclick="finishAndRate(\'' + post.id + '\',\'' + helperUid + '\',\'' + helperName.replace(/'/g,"") + '\')">✓ Yakunlash va baholash</button></div>';
+    panel.innerHTML = '<div style="padding:10px 14px 0;"><button class="btn-secondary" style="margin-top:0;" onclick="finishAndRate(\'' + post.id + '\',\'' + helperUid + '\',\'' + helperName.replace(/'/g,"") + '\')">âœ“ Yakunlash va baholash</button></div>';
   } else {
     panel.innerHTML = "";
   }
@@ -863,7 +1068,7 @@ function loadMessages(chatId){
   dbGet("chats/" + chatId).then(function(msgs){
     var el = document.getElementById("chat-messages");
     if(!msgs){
-      el.innerHTML = '<div class="empty-state"><span class="emoji">💬</span><p>Suhbatni boshlang</p></div>';
+      el.innerHTML = '<div class="empty-state"><span class="emoji">ðŸ’¬</span><p>Suhbatni boshlang</p></div>';
       return;
     }
     var arr = [];
@@ -914,11 +1119,11 @@ function finishAndRate(postId, helperUid, helperName){
   var panel = document.getElementById("chat-close-panel");
   var starsHTML = "";
   for(var i=1;i<=5;i++){
-    starsHTML += '<span class="star" id="star-' + i + '" onclick="setRatingStar(' + i + ')">★</span>';
+    starsHTML += '<span class="star" id="star-' + i + '" onclick="setRatingStar(' + i + ')">â˜…</span>';
   }
   panel.innerHTML =
     '<div class="card" style="margin:10px 14px 0;">' +
-      '<p style="text-align:center; font-size:13.5px; margin:0 0 4px;">' + escapeHTML(helperName) + ' ga qanday baho erasiz?</p>' +
+      '<p style="text-align:center; font-size:13.5px; margin:0 0 4px;">' + escapeHTML(helperName) + ' ga qanday baho berasiz?</p>' +
       '<div class="stars-input" id="stars-input">' + starsHTML + '</div>' +
       '<button class="btn-primary" onclick="confirmRating(\'' + postId + '\',\'' + helperUid + '\')">Yakunlash</button>' +
     '</div>';
@@ -950,12 +1155,17 @@ function confirmRating(postId, helperUid){
    ========================================================================= */
 function loadProfile(){
   var content = document.getElementById("profile-content");
-  var avg = state.user.ratingCount > 0 ? (state.user.ratingSum/state.user.ratingCount).toFixed(1) : "—";
+  var avg = state.user.ratingCount > 0 ? (state.user.ratingSum/state.user.ratingCount).toFixed(1) : "â€”";
+  var adminBadge = state.isAdmin ? '<span class="admin-badge">ADMIN</span>' : "";
   var html = '<div class="card">' +
-    '<div style="font-family:var(--font-display); font-size:20px; font-weight:700;">' + escapeHTML(state.user.name) + '</div>' +
-    '<div style="color:var(--ink-soft); font-size:13.5px; margin:2px 0 12px;">' + escapeHTML(state.user.mahalla) + ' · ' + escapeHTML(state.user.phone) + '</div>' +
-    '<div class="rating-summary"><span class="rating-num">' + avg + '</span><div><div class="rating-stars">⭐⭐⭐⭐⭐</div><div style="font-size:12px; color:var(--ink-soft);">' + state.user.ratingCount + ' ta baholash</div></div></div>' +
+    '<div style="font-family:var(--font-display); font-size:20px; font-weight:700;">' + escapeHTML(state.user.name) + adminBadge + '</div>' +
+    '<div style="color:var(--ink-soft); font-size:13.5px; margin:2px 0 12px;">' + escapeHTML(state.user.mahalla) + ' Â· ' + escapeHTML(state.user.phone) + '</div>' +
+    '<div class="rating-summary"><span class="rating-num">' + avg + '</span><div><div class="rating-stars">â­â­â­â­â­</div><div style="font-size:12px; color:var(--ink-soft);">' + state.user.ratingCount + ' ta baholash</div></div></div>' +
   '</div>';
+
+  if(state.isAdmin){
+    html += '<button class="btn-primary" style="background:var(--ink); margin-bottom:14px;" onclick="goTo(\'admin\')">ðŸ›  Admin panel</button>';
+  }
 
   html += '<div class="detail-section"><h4>Mening so\'rovlarim</h4><div id="my-posts-list"><div class="spinner"></div></div></div>';
   html += '<div class="detail-section"><h4>Suhbatlarim</h4><div id="my-chats-list"><div class="spinner"></div></div></div>';
@@ -999,7 +1209,7 @@ function loadMyChats(){
           var otherUid = meta.requesterUid === state.uid ? meta.helperUid : meta.requesterUid;
           html += '<div class="helper-item" onclick="openChatWith(\'' + meta.postId + '\',\'' + otherUid + '\',\'' + otherName.replace(/'/g,"") + '\')" style="cursor:pointer;">' +
             '<div><div class="hname">' + escapeHTML(otherName) + '</div><div style="font-size:12px; color:var(--ink-soft);">' + escapeHTML(meta.postTitle) + '</div></div>' +
-            '<span>💬</span></div>';
+            '<span>ðŸ’¬</span></div>';
         }
         if(loaded === ids.length){
           el.innerHTML = html || '<p style="font-size:13px; color:var(--ink-soft);">Hali suhbat yo\'q.</p>';
@@ -1010,9 +1220,123 @@ function loadMyChats(){
 }
 
 /* =========================================================================
+   Admin panel
+   ========================================================================= */
+function loadAdminPanel(){
+  if(!state.isAdmin){
+    showToast("Sizda admin huquqi yo'q");
+    goTo("profile");
+    return;
+  }
+  var content = document.getElementById("admin-content");
+  content.innerHTML = '<div class="spinner"></div>';
+
+  Promise.all([dbGet("posts"), dbGet("users"), dbGet("bannedUsers")]).then(function(results){
+    var posts = results[0] || {};
+    var users = results[1] || {};
+    var banned = results[2] || {};
+
+    var postArr = [];
+    for(var key in posts){
+      if(posts.hasOwnProperty(key)){
+        posts[key].id = key;
+        postArr.push(posts[key]);
+      }
+    }
+    // Shikoyat qilinganlar birinchi, keyin eng yangisi
+    postArr.sort(function(a,b){
+      var ar = a.reported ? 1 : 0, br = b.reported ? 1 : 0;
+      if(ar !== br) return br - ar;
+      return b.createdAt - a.createdAt;
+    });
+
+    var userCount = Object.keys(users).length;
+    var reportedCount = postArr.filter(function(p){ return p.reported; }).length;
+
+    var html = '<div class="stat-grid">' +
+      '<div class="stat-box"><span class="num">' + userCount + '</span><span class="lbl">Foydalanuvchi</span></div>' +
+      '<div class="stat-box"><span class="num">' + postArr.length + '</span><span class="lbl">So\'rov</span></div>' +
+      '<div class="stat-box"><span class="num">' + reportedCount + '</span><span class="lbl">Shikoyat</span></div>' +
+    '</div>';
+
+    html += '<div class="detail-section"><h4>Barcha so\'rovlar</h4><div id="admin-posts-list"></div></div>';
+    html += '<div class="detail-section"><h4>Bloklangan foydalanuvchilar</h4><div id="admin-banned-list"></div></div>';
+
+    content.innerHTML = html;
+
+    var postsListEl = document.getElementById("admin-posts-list");
+    if(postArr.length === 0){
+      postsListEl.innerHTML = '<p style="font-size:13px; color:var(--ink-soft);">Hali so\'rov yo\'q.</p>';
+    } else {
+      var pHtml = "";
+      for(var i=0;i<postArr.length;i++){
+        var p = postArr[i];
+        var isBanned = !!banned[p.uid];
+        pHtml += '<div class="admin-post-row">';
+        if(p.reported){ pHtml += '<span class="reported-flag">ðŸš© Shikoyat qilingan (' + (p.reportCount||1) + ')</span><br>'; }
+        pHtml += '<div class="apr-title">' + escapeHTML(p.title) + '</div>';
+        pHtml += '<div class="apr-meta">' + escapeHTML(p.name) + ' Â· ' + escapeHTML(p.mahalla || "") + ' Â· ' + timeAgo(p.createdAt) + '</div>';
+        pHtml += '<div class="admin-actions">';
+        pHtml += '<button class="admin-btn del" onclick="deletePostAdmin(\'' + p.id + '\')">ðŸ—‘ O\'chirish</button>';
+        if(isBanned){
+          pHtml += '<button class="admin-btn unban" onclick="unbanUserAdmin(\'' + p.uid + '\')">âœ“ Blokdan chiqarish</button>';
+        } else {
+          pHtml += '<button class="admin-btn ban" onclick="banUserAdmin(\'' + p.uid + '\')">ðŸš« Foydalanuvchini bloklash</button>';
+        }
+        pHtml += '</div></div>';
+      }
+      postsListEl.innerHTML = pHtml;
+    }
+
+    var bannedListEl = document.getElementById("admin-banned-list");
+    var bannedUids = Object.keys(banned);
+    if(bannedUids.length === 0){
+      bannedListEl.innerHTML = '<p style="font-size:13px; color:var(--ink-soft);">Bloklangan foydalanuvchi yo\'q.</p>';
+    } else {
+      var bHtml = "";
+      for(var j=0;j<bannedUids.length;j++){
+        var buid = bannedUids[j];
+        var bu = users[buid];
+        var bname = bu ? bu.name : buid;
+        bHtml += '<div class="helper-item"><div class="hname">' + escapeHTML(bname) + '</div>' +
+          '<button class="accept-btn" style="background:var(--sage);" onclick="unbanUserAdmin(\'' + buid + '\')">Blokdan chiqarish</button></div>';
+      }
+      bannedListEl.innerHTML = bHtml;
+    }
+  }).catch(function(){
+    content.innerHTML = '<div class="config-warning">Ma\'lumotlarni yuklab bo\'lmadi. Internetni tekshiring.</div>';
+  });
+}
+
+function deletePostAdmin(postId){
+  dbSet("posts/" + postId, null).then(function(){
+    dbSet("postHelpers/" + postId, null);
+    showToast("So'rov o'chirildi");
+    loadAdminPanel();
+  }).catch(function(){
+    showToast("O'chirishda xatolik");
+  });
+}
+
+function banUserAdmin(uid){
+  dbSet("bannedUsers/" + uid, true).then(function(){
+    showToast("Foydalanuvchi bloklandi");
+    loadAdminPanel();
+  });
+}
+
+function unbanUserAdmin(uid){
+  dbSet("bannedUsers/" + uid, null).then(function(){
+    showToast("Blok bekor qilindi");
+    loadAdminPanel();
+  });
+}
+
+/* =========================================================================
    Ishga tushirish
    ========================================================================= */
 initSession();
+
 if("serviceWorker" in navigator){
   window.addEventListener("load", function(){
     navigator.serviceWorker.register("service-worker.js").catch(function(){});
